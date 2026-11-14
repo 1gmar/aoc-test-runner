@@ -3,13 +3,27 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixvim-1gmar = {
+      url = "github:1gmar/nixvim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
-    { nixpkgs, ... }:
+    {
+      nixpkgs,
+      nixvim-1gmar,
+      ...
+    }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
+      neovim = nixvim-1gmar.packages.${system}.default.extend {
+        git.enable = true;
+        languages = {
+          nushell.enable = true;
+        };
+      };
       checkScript =
         name: script:
         pkgs.runCommandLocal name { nativeBuildInputs = [ pkgs.nushell ]; } ''
@@ -32,6 +46,12 @@
         run-tests = checkScript "run-tests" ./run-tests.nu;
         test-utils = checkScript "test-utils" ./modules/test-utils.nu;
       };
+      devShells.${system}.default = pkgs.mkShellNoCC {
+        packages = [
+          neovim
+          pkgs.nushell
+        ];
+      };
       packages.${system}.default =
         pkgs.writers.writeNuBin "run-tests" # nu
           ''
@@ -43,7 +63,7 @@
                 $"| run-test-runner (if $ignored { '-i' }) '($testPattern)'"
               ] 
               | str join (char space)
-              | with-env {NU_LIB_DIRS: ($env.NU_LIB_DIRS | str join (char env_sep))} { nu -c $in }
+              | with-env {NU_LIB_DIRS: ($env.NU_LIB_DIRS | str join (char env_sep))} { nu -n -c $in }
             }
           '';
       modules = ./modules;

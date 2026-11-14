@@ -28,7 +28,7 @@ export def run-test-runner [testPattern: string = '^day\d\d? test' --ignored (-i
     | str join ";"
 
   with-env {NU_LIB_DIRS: ($env.NU_LIB_DIRS | str join (char env_sep))} {
-    nu -c $"use src * ; ($test_commands)"
+    nu -n -c $"use src * ; ($test_commands)"
   }
 
   print $"✅ (ansi bo)(ansi green)All tests passed!(ansi reset)"
