@@ -34,7 +34,7 @@
               | each { from json }
               | where severity? == Error
             if ($errors | is-not-empty) {
-              $errors | to json | print -e
+              $errors | to json -r | print -e
               exit 1
             }
           '
@@ -57,7 +57,7 @@
           ''
             def main [testPattern: string = '^day\d\d? test' --ignored (-i)] {
               [
-                "use src * ;"
+                "use tests * ;"
                 "use ${./run-tests.nu} * ;"
                 "scope commands"
                 $"| run-test-runner (if $ignored { '-i' }) '($testPattern)'"
